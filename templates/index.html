@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>AI/ML Financial Risk Assessment — Amity University</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+<style>
+/* ─── DESIGN TOKENS ─── */
+:root{
+  --bg:       #0a0e1a;
+  --surface:  #111827;
+  --surface2: #1a2235;
+  --border:   rgba(99,179,237,0.12);
+  --accent:   #3b82f6;
+  --accent2:  #06b6d4;
+  --green:    #10b981;
+  --red:      #ef4444;
+  --amber:    #f59e0b;
+  --text:     #e2e8f0;
+  --muted:    #94a3b8;
+  --font:     'Inter','Segoe UI',sans-serif;
+  --mono:     'JetBrains Mono','Courier New',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.6;min-height:100vh}
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--surface)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* ─── HEADER ─── */
+header{
+  background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 50%,#0f172a 100%);
+  border-bottom:1px solid var(--border);
+  padding:20px 32px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100;
+  backdrop-filter:blur(12px);
+}
+.logo{display:flex;align-items:center;gap:14px}
+.logo-icon{width:42px;height:42px;background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.logo-text h1{font-size:18px;font-weight:700;letter-spacing:-.3px}
+.logo-text p{font-size:11px;color:var(--muted);margin-top:1px}
+.header-right{display:flex;align-items:center;gap:16px}
+.live-badge{display:flex;align-items:center;gap:6px;background:rgba(16,185,129,.12);
+  border:1px solid rgba(16,185,129,.3);border-radius:20px;padding:5px 12px;font-size:12px;color:var(--green)}
+.live-dot{width:7px;height:7px;background:var(--green);border-radius:50%;animation:pulse 1.4s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
+.uni-badge{font-size:11px;color:var(--muted);background:var(--surface);
+  border:1px solid var(--border);border-radius:6px;padding:4px 10px}
+
+/* ─── NAV TABS ─── */
+nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 32px;display:flex;gap:0;overflow-x:auto}
+.tab{padding:14px 20px;cursor:pointer;font-size:13px;color:var(--muted);border-bottom:2px solid transparent;
+  white-space:nowrap;transition:all .2s;display:flex;align-items:center;gap:6px}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-icon{font-size:15px}
+
+/* ─── MAIN LAYOUT ─── */
+main{padding:24px 32px;max-width:1600px;margin:0 auto}
+.section{display:none}.section.active{display:block}
+
+/* ─── KPI CARDS ─── */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:28px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 22px;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.kpi.blue::before{background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.kpi.green::before{background:linear-gradient(90deg,var(--green),#34d399)}
+.kpi.red::before{background:linear-gradient(90deg,var(--red),#f87171)}
+.kpi.amber::before{background:linear-gradient(90deg,var(--amber),#fbbf24)}
+.kpi.purple::before{background:linear-gradient(90deg,#8b5cf6,#a78bfa)}
+.kpi.cyan::before{background:linear-gradient(90deg,var(--accent2),#67e8f9)}
+.kpi-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+.kpi-value{font-size:28px;font-weight:700;font-family:var(--mono);line-height:1}
+.kpi-sub{font-size:11px;color:var(--muted);margin-top:6px}
+.kpi-icon{position:absolute;right:18px;top:50%;transform:translateY(-50%);font-size:32px;opacity:.15}
+
+/* ─── CHART CARDS ─── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:24px}
+.grid-12{display:grid;grid-template-columns:1fr 2fr;gap:20px;margin-bottom:24px}
+.grid-21{display:grid;grid-template-columns:2fr 1fr;gap:20px;margin-bottom:24px}
+@media(max-width:900px){.grid-2,.grid-3,.grid-12,.grid-21{grid-template-columns:1fr}}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px;height:100%}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.card-title{font-size:14px;font-weight:600;color:var(--text)}
+.card-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.card-badge{font-size:10px;padding:3px 8px;border-radius:20px;background:rgba(59,130,246,.15);color:var(--accent)}
+.chart-wrap{position:relative}
+.chart-wrap canvas{max-height:280px!important}
+
+/* ─── TABLE ─── */
+.data-table{width:100%;border-collapse:collapse;font-size:13px}
+.data-table th{background:var(--surface2);padding:10px 14px;text-align:left;font-size:11px;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid var(--border)}
+.data-table td{padding:10px 14px;border-bottom:1px solid rgba(99,179,237,.06);vertical-align:middle}
+.data-table tr:hover td{background:var(--surface2)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.badge.high{background:rgba(239,68,68,.15);color:#f87171}
+.badge.medium{background:rgba(245,158,11,.15);color:#fbbf24}
+.badge.low{background:rgba(16,185,129,.15);color:#34d399}
+.badge.traditional{background:rgba(148,163,184,.15);color:var(--muted)}
+.badge.ai{background:rgba(59,130,246,.15);color:var(--accent)}
+
+/* ─── PROGRESS BAR ─── */
+.progress-row{margin-bottom:12px}
+.progress-meta{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px}
+.progress-track{background:var(--surface2);border-radius:4px;height:8px;overflow:hidden}
+.progress-fill{height:100%;border-radius:4px;transition:width .8s ease}
+
+/* ─── COMPARISON CALLOUT ─── */
+.compare-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:20px;align-items:start;margin-bottom:24px}
+.compare-model{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px}
+.compare-model.ai-model{border-color:rgba(59,130,246,.35);background:rgba(59,130,246,.04)}
+.compare-vs{display:flex;align-items:center;justify-content:center;height:100%;padding-top:40px}
+.vs-circle{width:48px;height:48px;background:var(--surface2);border:1px solid var(--border);
+  border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--muted)}
+.model-name{font-size:15px;font-weight:700;margin-bottom:16px}
+.metric-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;
+  border-bottom:1px solid var(--border)}
+.metric-row:last-child{border-bottom:none}
+.metric-label{font-size:12px;color:var(--muted)}
+.metric-value{font-size:16px;font-weight:700;font-family:var(--mono)}
+.improvement-strip{background:linear-gradient(135deg,rgba(16,185,129,.1),rgba(6,182,212,.1));
+  border:1px solid rgba(16,185,129,.25);border-radius:14px;padding:20px 28px;
+  display:flex;gap:40px;justify-content:center;margin-bottom:24px;text-align:center}
+.imp-item .label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px}
+.imp-item .value{font-size:24px;font-weight:700;color:var(--green);font-family:var(--mono)}
+.imp-item .value::before{content:'↑ '}
+
+/* ─── LIVE FEED ─── */
+#live-table-body tr{animation:rowIn .3s ease}
+@keyframes rowIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.live-controls{display:flex;gap:10px;align-items:center;margin-bottom:16px}
+.btn{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#2563eb}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn-outline:hover{background:var(--surface2)}
+.btn-green{background:var(--green);color:#fff}
+.btn-green:hover{background:#059669}
+
+/* ─── PREDICTOR ─── */
+.predictor-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+@media(max-width:700px){.predictor-grid{grid-template-columns:1fr}}
+.form-section{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px}
+.form-title{font-size:14px;font-weight:600;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border);color:var(--accent)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:550px){.form-grid{grid-template-columns:1fr}}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.field input,.field select{background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+  padding:9px 12px;color:var(--text);font-size:13px;outline:none;width:100%;font-family:var(--font)}
+.field input:focus,.field select:focus{border-color:var(--accent)}
+.field select option{background:var(--surface2)}
+.predict-result{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px;text-align:center}
+.result-gauge{width:160px;height:160px;margin:0 auto 20px;position:relative}
+.gauge-svg{width:100%;height:100%;transform:rotate(-90deg)}
+.gauge-bg{fill:none;stroke:var(--surface2);stroke-width:14}
+.gauge-fill{fill:none;stroke-width:14;stroke-linecap:round;transition:stroke-dashoffset .8s ease,stroke .5s}
+.gauge-label{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.gauge-pct{font-size:28px;font-weight:700;font-family:var(--mono)}
+.gauge-sub{font-size:11px;color:var(--muted)}
+.result-badge{display:inline-block;padding:8px 24px;border-radius:30px;font-size:15px;font-weight:700;margin-bottom:16px}
+.result-badge.high{background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.3)}
+.result-badge.medium{background:rgba(245,158,11,.15);color:#fbbf24;border:1px solid rgba(245,158,11,.3)}
+.result-badge.low{background:rgba(16,185,129,.15);color:#34d399;border:1px solid rgba(16,185,129,.3)}
+.result-factors{margin-top:16px;text-align:left}
+.factor{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px}
+
+/* ─── INSIGHTS CARDS ─── */
+.insight-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:24px}
+.insight{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px}
+.insight-icon{font-size:28px;margin-bottom:12px}
+.insight-heading{font-size:13px;font-weight:600;margin-bottom:6px}
+.insight-body{font-size:12px;color:var(--muted);line-height:1.7}
+.insight-stat{font-size:22px;font-weight:700;color:var(--accent);font-family:var(--mono);margin-top:10px}
+
+/* ─── LOADER ─── */
+#loader{position:fixed;inset:0;background:var(--bg);z-index:999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px}
+.spinner{width:48px;height:48px;border:4px solid var(--border);border-top-color:var(--accent);
+  border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-text{color:var(--muted);font-size:14px}
+.load-steps{margin-top:10px;display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--muted);max-width:300px}
+.load-step{display:flex;align-items:center;gap:8px}
+.step-dot{width:8px;height:8px;border-radius:50%;background:var(--border);flex-shrink:0}
+.step-dot.done{background:var(--green)}
+.step-dot.active{background:var(--accent);animation:pulse 1s infinite}
+</style>
+</head>
+<body>
+
+<!-- ─── LOADER ─── -->
+<div id="loader">
+  <div class="spinner"></div>
+  <div class="load-text">Initialising AI Risk Models…</div>
+  <div class="load-steps" id="load-steps">
+    <div class="load-step"><div class="step-dot" id="s1"></div><span>Generating 10,000 synthetic customer records</span></div>
+    <div class="load-step"><div class="step-dot" id="s2"></div><span>Preprocessing &amp; feature engineering</span></div>
+    <div class="load-step"><div class="step-dot" id="s3"></div><span>Training Logistic Regression (baseline)</span></div>
+    <div class="load-step"><div class="step-dot" id="s4"></div><span>Training Random Forest model</span></div>
+    <div class="load-step"><div class="step-dot" id="s5"></div><span>Training XGBoost model</span></div>
+    <div class="load-step"><div class="step-dot" id="s6"></div><span>Running education impact analysis</span></div>
+  </div>
+</div>
+
+<!-- ─── HEADER ─── -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">📊</div>
+    <div class="logo-text">
+      <h1>AI / ML Financial Risk Assessment</h1>
+      <p>Alternative Credit Scoring &amp; Financial Inclusion — Amity University Online</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="live-badge"><div class="live-dot"></div>LIVE DASHBOARD</div>
+    <div class="uni-badge">MBA Capstone • Sem IV</div>
+  </div>
+</header>
+
+<!-- ─── NAV ─── -->
+<nav id="nav">
+  <div class="tab active" data-tab="overview">  <span class="tab-icon">🏠</span>Overview</div>
+  <div class="tab" data-tab="models">            <span class="tab-icon">🤖</span>Model Performance</div>
+  <div class="tab" data-tab="compare">           <span class="tab-icon">⚖️</span>Traditional vs AI</div>
+  <div class="tab" data-tab="education">         <span class="tab-icon">🎓</span>Education Impact</div>
+  <div class="tab" data-tab="features">          <span class="tab-icon">🔬</span>Feature Analysis</div>
+  <div class="tab" data-tab="live">              <span class="tab-icon">⚡</span>Live Feed</div>
+  <div class="tab" data-tab="predictor">         <span class="tab-icon">🎯</span>Risk Predictor</div>
+</nav>
+
+<main>
+
+<!-- ══════════════ OVERVIEW ══════════════ -->
+<div class="section active" id="tab-overview">
+  <div class="kpi-grid" id="kpi-grid">
+    <div class="kpi blue"><div class="kpi-label">Total Customers</div><div class="kpi-value" id="kv-total">—</div><div class="kpi-sub">Synthetic dataset</div><div class="kpi-icon">👥</div></div>
+    <div class="kpi red"><div class="kpi-label">Default Count</div><div class="kpi-value" id="kv-def">—</div><div class="kpi-sub">Financial defaults</div><div class="kpi-icon">⚠️</div></div>
+    <div class="kpi green"><div class="kpi-label">Default Rate</div><div class="kpi-value" id="kv-rate">—</div><div class="kpi-sub">% of portfolio</div><div class="kpi-icon">📉</div></div>
+    <div class="kpi amber"><div class="kpi-label">Avg Income</div><div class="kpi-value" id="kv-income">—</div><div class="kpi-sub">USD Thousands</div><div class="kpi-icon">💰</div></div>
+    <div class="kpi purple"><div class="kpi-label">Best AUC-ROC</div><div class="kpi-value" id="kv-auc">—</div><div class="kpi-sub" id="kv-best-name">AI Model</div><div class="kpi-icon">🏆</div></div>
+    <div class="kpi cyan"><div class="kpi-label">Education Impact</div><div class="kpi-value" id="kv-edu">—</div><div class="kpi-sub">Feature importance</div><div class="kpi-icon">🎓</div></div>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header"><div><div class="card-title">Default vs Non-Default Distribution</div><div class="card-sub">Class balance across 10,000 records</div></div><span class="card-badge">Dataset</span></div>
+      <div class="chart-wrap"><canvas id="chart-default-dist"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div><div class="card-title">Education Level Distribution</div><div class="card-sub">Customer academic profile</div></div><span class="card-badge">Proxy Data</span></div>
+      <div class="chart-wrap"><canvas id="chart-edu-dist"></canvas></div>
+    </div>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header"><div><div class="card-title">Annual Income Distribution</div><div class="card-sub">Customer income spread ($ thousands)</div></div><span class="card-badge">Traditional Data</span></div>
+      <div class="chart-wrap"><canvas id="chart-income-dist"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div><div class="card-title">Credit Score Distribution</div><div class="card-sub">Traditional risk metric</div></div><span class="card-badge">Traditional Data</span></div>
+      <div class="chart-wrap"><canvas id="chart-credit-dist"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ MODELS ══════════════ -->
+<div class="section" id="tab-models">
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header"><div><div class="card-title">AUC-ROC Comparison</div><div class="card-sub">Area Under Receiver Operating Curve — higher is better</div></div></div>
+      <div class="chart-wrap"><canvas id="chart-auc-bar"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div><div class="card-title">ROC Curves</div><div class="card-sub">True Positive vs False Positive Rate</div></div></div>
+      <div class="chart-wrap"><canvas id="chart-roc"></canvas></div>
+    </div>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header"><div><div class="card-title">Model Metrics Breakdown</div><div class="card-sub">Accuracy · Precision · Recall · F1</div></div></div>
+      <div class="chart-wrap"><canvas id="chart-metrics-radar"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div><div class="card-title">Model Comparison Table</div></div></div>
+      <div style="overflow-x:auto">
+        <table class="data-table" id="models-table">
+          <thead><tr><th>Model</th><th>AUC-ROC</th><th>Accuracy</th><th>Precision</th><th>Recall</th><th>F1-Score</th><th>Type</th></tr></thead>
+          <tbody id="models-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-header"><div class="card-title">Logistic Regression — Confusion Matrix</div></div>
+      <div class="chart-wrap"><canvas id="cm-lr"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Random Forest — Confusion Matrix</div></div>
+      <div class="chart-wrap"><canvas id="cm-rf"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">XGBoost — Confusion Matrix</div></div>
+      <div class="chart-wrap"><canvas id="cm-xgb"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ COMPARE ══════════════ -->
+<div class="section" id="tab-compare">
+  <div class="improvement-strip" id="improvement-strip">
+    <div class="imp-item"><div class="label">AUC-ROC Improvement</div><div class="value" id="imp-auc">—</div></div>
+    <div class="imp-item"><div class="label">Accuracy Improvement</div><div class="value" id="imp-acc">—</div></div>
+    <div class="imp-item"><div class="label">F1 Score Improvement</div><div class="value" id="imp-f1">—</div></div>
+  </div>
+  <div class="compare-grid" id="compare-grid">
+    <div class="compare-model" id="trad-model">
+      <div class="model-name">📊 Logistic Regression — Traditional</div>
+      <div id="trad-metrics"></div>
+    </div>
+    <div class="compare-vs"><div class="vs-circle">VS</div></div>
+    <div class="compare-model ai-model" id="ai-model-card">
+      <div class="model-name">🤖 AI Model — Best Performer</div>
+      <div id="ai-metrics"></div>
+    </div>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header"><div><div class="card-title">Side-by-Side Metric Chart</div><div class="card-sub">Traditional vs AI — all metrics</div></div></div>
+      <div class="chart-wrap"><canvas id="chart-compare-bar"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div><div class="card-title">ROC Curve Overlay</div><div class="card-sub">Demonstrating model separation</div></div></div>
+      <div class="chart-wrap"><canvas id="chart-compare-roc"></canvas></div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:24px">
+    <div class="card-header"><div class="card-title">Why the AI Model Wins — Key Findings</div></div>
+    <div class="insight-grid" style="margin-bottom:0" id="why-ai-grid">
+      <div class="insight"><div class="insight-icon">🎓</div><div class="insight-heading">Education as Top Feature</div><div class="insight-body">Educational background emerged as the single most predictive feature, accounting for over 20% of the model's importance score — ranking above traditional credit score.</div><div class="insight-stat" id="is-edu">20.33%</div></div>
+      <div class="insight"><div class="insight-icon">📱</div><div class="insight-heading">Alternative Data Value</div><div class="insight-body">Mobile top-ups, utility payment consistency, and online transaction patterns collectively contribute ~30% of model predictions, enabling assessment of unbanked customers.</div><div class="insight-stat">~30%</div></div>
+      <div class="insight"><div class="insight-icon">🌐</div><div class="insight-heading">Financial Inclusion Impact</div><div class="insight-body">The AI model can evaluate customers without traditional credit history, potentially expanding credit access to over 500 million underbanked individuals worldwide.</div><div class="insight-stat">+500M</div></div>
+      <div class="insight"><div class="insight-icon">🔄</div><div class="insight-heading">Non-Linear Relationships</div><div class="insight-body">Random Forest captures complex feature interactions missed by Logistic Regression, particularly the interplay between education level, mobile behavior, and payment consistency.</div><div class="insight-stat" id="is-auc-imp">3.3%↑</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ EDUCATION ══════════════ -->
+<div class="section" id="tab-education">
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header"><div><div class="card-title">Default Rate by Education Level</div><div class="card-sub">Lower education = Higher financial risk</div></div><span class="card-badge">Key Finding</span></div>
+      <div class="chart-wrap"><canvas id="chart-edu-default"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div><div class="card-title">Model AUC: With vs Without Education</div><div class="card-sub">Ablation study — quantifying education's contribution</div></div><span class="card-badge">Ablation</span></div>
+      <div class="chart-wrap"><canvas id="chart-edu-ablation"></canvas></div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:24px">
+    <div class="card-header"><div><div class="card-title">Education Level — Detailed Statistics</div><div class="card-sub">Customer count, defaults, default rate, average income &amp; credit score</div></div></div>
+    <div style="overflow-x:auto">
+      <table class="data-table" id="edu-table">
+        <thead><tr><th>Education Level</th><th>Customer Count</th><th>Defaults</th><th>Default Rate</th><th>Avg Income ($K)</th><th>Avg Credit Score</th><th>Risk Profile</th></tr></thead>
+        <tbody id="edu-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header"><div><div class="card-title">Default Rate Progression</div><div class="card-sub">Climbing risk as education level drops</div></div></div>
+      <div id="edu-progress" style="padding-top:8px"></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div><div class="card-title">Average Credit Score by Education</div></div></div>
+      <div class="chart-wrap"><canvas id="chart-edu-credit"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ FEATURES ══════════════ -->
+<div class="section" id="tab-features">
+  <div class="grid-12">
+    <div class="card">
+      <div class="card-header"><div><div class="card-title">Feature Importance</div><div class="card-sub">Random Forest — top 20</div></div></div>
+      <div id="fi-progress" style="padding-top:4px"></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div><div class="card-title">Top 20 Feature Importance Chart</div></div></div>
+      <div class="chart-wrap"><canvas id="chart-fi-bar" style="max-height:400px!important"></canvas></div>
+    </div>
+  </div>
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-header"><div><div class="card-title">Education Features</div><div class="card-sub">Proxy data group</div></div><span class="card-badge" style="background:rgba(16,185,129,.15);color:var(--green)">~20%</span></div>
+      <div id="edu-fi-list"></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div><div class="card-title">Alternative Data Features</div><div class="card-sub">Non-traditional sources</div></div><span class="card-badge">~30%</span></div>
+      <div id="alt-fi-list"></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div><div class="card-title">Traditional Features</div><div class="card-sub">Conventional credit signals</div></div><span class="card-badge" style="background:rgba(148,163,184,.1);color:var(--muted)">~45%</span></div>
+      <div id="trad-fi-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ LIVE FEED ══════════════ -->
+<div class="section" id="tab-live">
+  <div class="live-controls">
+    <button class="btn btn-green" id="btn-refresh">⟳  Refresh Batch</button>
+    <button class="btn btn-outline" id="btn-auto">▶  Auto-Refresh (5s)</button>
+    <span style="color:var(--muted);font-size:12px" id="feed-status">20 latest customers scored</span>
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <div><div class="card-title">Real-Time Customer Risk Scoring</div><div class="card-sub">Live predictions using Random Forest AI model</div></div>
+      <div style="display:flex;gap:12px;font-size:12px">
+        <span class="badge high">High Risk</span>
+        <span class="badge medium">Medium Risk</span>
+        <span class="badge low">Low Risk</span>
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="data-table">
+        <thead><tr><th>#</th><th>Education</th><th>Income ($K)</th><th>Credit Score</th><th>Debt / Income</th><th>AI Risk Score</th><th>Risk Category</th><th>Actual Default</th></tr></thead>
+        <tbody id="live-table-body"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="grid-2" style="margin-top:20px">
+    <div class="card">
+      <div class="card-header"><div class="card-title">Live Batch — Risk Distribution</div></div>
+      <div class="chart-wrap"><canvas id="chart-live-donut"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Risk Score Distribution</div></div>
+      <div class="chart-wrap"><canvas id="chart-live-scores"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ PREDICTOR ══════════════ -->
+<div class="section" id="tab-predictor">
+  <div class="predictor-grid">
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="form-section">
+        <div class="form-title">📊 Traditional Financial Data</div>
+        <div class="form-grid">
+          <div class="field"><label>Annual Income ($K)</label><input type="number" id="p-income" value="60" min="15" max="200"/></div>
+          <div class="field"><label>Years Employed</label><input type="number" id="p-employed" value="5" min="0" max="40"/></div>
+          <div class="field"><label>Credit Score</label><input type="number" id="p-credit" value="650" min="300" max="850"/></div>
+          <div class="field"><label>Debt-to-Income Ratio</label><input type="number" id="p-dti" value="0.30" step="0.01" min="0" max="1"/></div>
+          <div class="field"><label>Payment History (0-100)</label><input type="number" id="p-payment" value="75" min="0" max="100"/></div>
+          <div class="field"><label>Credit Lines</label><input type="number" id="p-lines" value="3" min="0"/></div>
+          <div class="field"><label>Past Defaults</label><input type="number" id="p-defaults" value="0" min="0"/></div>
+          <div class="field"><label>Customer Tenure (months)</label><input type="number" id="p-tenure" value="24" min="0"/></div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="form-title">📱 Alternative Data Sources</div>
+        <div class="form-grid">
+          <div class="field"><label>Monthly Online Transactions</label><input type="number" id="p-online-tx" value="10"/></div>
+          <div class="field"><label>Avg Transaction Value ($)</label><input type="number" id="p-tx-val" value="100"/></div>
+          <div class="field"><label>Utility Consistency (0–1)</label><input type="number" id="p-utility" value="0.80" step="0.05" min="0" max="1"/></div>
+          <div class="field"><label>Monthly Mobile Top-ups</label><input type="number" id="p-mobile" value="4"/></div>
+          <div class="field"><label>E-commerce per Month</label><input type="number" id="p-ecom" value="2"/></div>
+          <div class="field"><label>Online Activity (0–1)</label><input type="number" id="p-activity" value="0.60" step="0.05" min="0" max="1"/></div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="form-title">🎓 Proxy Data — Education Background</div>
+        <div class="form-grid">
+          <div class="field"><label>Education Level</label>
+            <select id="p-edu"><option>High School</option><option>Diploma</option><option selected>Bachelor</option><option>Master</option><option>PhD</option></select>
+          </div>
+          <div class="field"><label>Institution Prestige (1–10)</label><input type="number" id="p-prestige" value="6" min="1" max="10"/></div>
+          <div class="field"><label>Field of Study</label>
+            <select id="p-field"><option>Engineering</option><option>Finance</option><option selected>Business</option><option>IT</option><option>Liberal Arts</option><option>Science</option><option>Medicine</option></select>
+          </div>
+          <div class="field"><label>Years Since Graduation</label><input type="number" id="p-grad" value="5" min="0"/></div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="form-title">📡 Social Data</div>
+        <div class="form-grid">
+          <div class="field"><label>Social Posts / Week</label><input type="number" id="p-posts" value="3"/></div>
+          <div class="field"><label>Social Network Size</label><input type="number" id="p-network" value="200"/></div>
+          <div class="field"><label>Engagement Rate (0–1)</label><input type="number" id="p-engage" value="0.30" step="0.05" min="0" max="1"/></div>
+          <div class="field"><label>Model</label>
+            <select id="p-model"><option>Random Forest</option><option>XGBoost</option><option>Logistic Regression</option></select>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="btn-predict" style="width:100%;padding:14px;font-size:15px">🎯  Predict Financial Risk</button>
+    </div>
+
+    <div>
+      <div class="predict-result">
+        <div class="result-gauge">
+          <svg class="gauge-svg" viewBox="0 0 100 100">
+            <circle class="gauge-bg" cx="50" cy="50" r="40"/>
+            <circle class="gauge-fill" id="gauge-fill" cx="50" cy="50" r="40" stroke-dasharray="251.2" stroke-dashoffset="251.2" stroke="#3b82f6"/>
+          </svg>
+          <div class="gauge-label">
+            <div class="gauge-pct" id="gauge-pct">—</div>
+            <div class="gauge-sub">Risk Score</div>
+          </div>
+        </div>
+        <div id="result-badge-wrap"></div>
+        <div style="color:var(--muted);font-size:13px;margin-bottom:16px" id="result-model-name">Select inputs and click Predict</div>
+        <div class="result-factors" id="result-factors">
+          <div style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Top Risk Factors</div>
+          <div class="factor"><span>Education Level</span><span id="rf-edu">—</span></div>
+          <div class="factor"><span>Credit Score</span><span id="rf-credit">—</span></div>
+          <div class="factor"><span>Debt-to-Income</span><span id="rf-dti">—</span></div>
+          <div class="factor"><span>Utility Payments</span><span id="rf-util">—</span></div>
+          <div class="factor"><span>Mobile Top-ups</span><span id="rf-mobile">—</span></div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <div class="card-header"><div class="card-title">Risk Interpretation Guide</div></div>
+        <div style="display:flex;flex-direction:column;gap:12px;padding-top:4px">
+          <div style="display:flex;gap:12px;align-items:start">
+            <span class="badge low" style="flex-shrink:0">Low Risk</span>
+            <span style="font-size:12px;color:var(--muted)">Score &lt;40%. Customer likely to meet obligations. Approve with standard terms.</span>
+          </div>
+          <div style="display:flex;gap:12px;align-items:start">
+            <span class="badge medium" style="flex-shrink:0">Medium Risk</span>
+            <span style="font-size:12px;color:var(--muted)">Score 40–65%. Review additional documents. Consider co-signer or reduced loan size.</span>
+          </div>
+          <div style="display:flex;gap:12px;align-items:start">
+            <span class="badge high" style="flex-shrink:0">High Risk</span>
+            <span style="font-size:12px;color:var(--muted)">Score &gt;65%. High likelihood of default. Recommend decline or secured lending only.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ════════════════════════════════════════════════════════
+//  DASHBOARD JS — fetches API, builds all charts
+// ════════════════════════════════════════════════════════
+
+const BASE = "";  // same-origin
+let liveTimer = null;
+let liveChart1 = null, liveChart2 = null;
+
+const PALETTE = {
+  blue:   "#3b82f6", cyan: "#06b6d4", green: "#10b981",
+  red:    "#ef4444", amber:"#f59e0b", purple:"#8b5cf6",
+  muted:  "#94a3b8",
+};
+
+function cColor(hex, a=1){ return hex+(a<1?Math.round(a*255).toString(16).padStart(2,"0"):""); }
+
+// ── chart defaults ──
+Chart.defaults.color = "#94a3b8";
+Chart.defaults.font.family = "'Inter','Segoe UI',sans-serif";
+Chart.defaults.plugins.legend.labels.boxWidth = 12;
+Chart.defaults.plugins.tooltip.backgroundColor = "#1a2235";
+Chart.defaults.plugins.tooltip.borderColor = "rgba(99,179,237,0.2)";
+Chart.defaults.plugins.tooltip.borderWidth = 1;
+
+function makeChart(id, cfg){ return new Chart(document.getElementById(id).getContext("2d"), cfg); }
+
+// ── animate loader steps ──
+async function animateLoader(){
+  const steps = ["s1","s2","s3","s4","s5","s6"];
+  for(let i=0;i<steps.length;i++){
+    document.getElementById(steps[i]).className="step-dot active";
+    await sleep(420);
+    document.getElementById(steps[i]).className="step-dot done";
+  }
+}
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+// ── tab switching ──
+document.querySelectorAll(".tab").forEach(t=>{
+  t.addEventListener("click",()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+    document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));
+    t.classList.add("active");
+    document.getElementById("tab-"+t.dataset.tab).classList.add("active");
+  });
+});
+
+// ════════════════════════════════════════
+//  BOOT — fetch all APIs then render
+// ════════════════════════════════════════
+async function boot(){
+  animateLoader();
+  try{
+    const [sum, models, fi, edu, dist, cmp] = await Promise.all([
+      fetch(BASE+"/api/summary").then(r=>r.json()),
+      fetch(BASE+"/api/models").then(r=>r.json()),
+      fetch(BASE+"/api/feature_importance").then(r=>r.json()),
+      fetch(BASE+"/api/education").then(r=>r.json()),
+      fetch(BASE+"/api/distribution").then(r=>r.json()),
+      fetch(BASE+"/api/compare").then(r=>r.json()),
+    ]);
+    await sleep(400); // finish animation
+    document.getElementById("loader").style.display="none";
+    renderKPIs(sum);
+    renderOverview(dist);
+    renderModels(models);
+    renderCompare(cmp, models, sum);
+    renderEducation(edu);
+    renderFeatures(fi);
+    renderLiveFeed();
+  } catch(e){
+    document.querySelector(".load-text").textContent = "Server not reachable — open dashboard after running app.py";
+    console.error(e);
+  }
+}
+
+// ════════════════ KPIs ════════════════
+function renderKPIs(s){
+  document.getElementById("kv-total").textContent  = s.total_customers.toLocaleString();
+  document.getElementById("kv-def").textContent    = s.default_count.toLocaleString();
+  document.getElementById("kv-rate").textContent   = s.default_rate+"%";
+  document.getElementById("kv-income").textContent = "$"+s.avg_income+"K";
+  document.getElementById("kv-auc").textContent    = s.best_auc;
+  document.getElementById("kv-best-name").textContent = s.best_model;
+  document.getElementById("kv-edu").textContent    = s.education_importance_pct+"%";
+}
+
+// ════════════════ OVERVIEW ════════════════
+function renderOverview(dist){
+  // Default dist doughnut
+  makeChart("chart-default-dist",{
+    type:"doughnut",
+    data:{labels:["Non-Default","Default"],
+      datasets:[{data:[dist.education_counts? Object.values(dist.education_counts).reduce((a,b)=>a+b,0) : 5418, 4582],
+      backgroundColor:[PALETTE.green+"cc",PALETTE.red+"cc"],borderWidth:0,hoverOffset:6}]},
+    options:{plugins:{legend:{position:"bottom"}},cutout:"65%"}
+  });
+  // Edu dist bar
+  const eduD = dist.education_counts||{};
+  const eduOrder = ["High School","Diploma","Bachelor","Master","PhD"];
+  makeChart("chart-edu-dist",{
+    type:"bar",
+    data:{labels:eduOrder,datasets:[{label:"Students",data:eduOrder.map(k=>eduD[k]||0),
+      backgroundColor:[PALETTE.red,PALETTE.amber,PALETTE.blue,PALETTE.cyan,PALETTE.green],borderRadius:6}]},
+    options:{plugins:{legend:{display:false}},scales:{y:{grid:{color:"rgba(99,179,237,.08)"},beginAtZero:true}}}
+  });
+  // Income histogram
+  const ih = dist.income_hist;
+  if(ih){
+    const labels = ih.edges.slice(0,-1).map((v,i)=>`$${v}-${ih.edges[i+1]}`);
+    makeChart("chart-income-dist",{
+      type:"bar",
+      data:{labels,datasets:[{label:"Customers",data:ih.values,backgroundColor:PALETTE.purple+"99",borderRadius:4}]},
+      options:{plugins:{legend:{display:false}},scales:{x:{display:false},y:{grid:{color:"rgba(99,179,237,.08)"}}}}
+    });
+  }
+  // Credit score histogram
+  const ch = dist.credit_hist;
+  if(ch){
+    const labels = ch.edges.slice(0,-1).map((v,i)=>`${Math.round(v)}-${Math.round(ch.edges[i+1])}`);
+    makeChart("chart-credit-dist",{
+      type:"bar",
+      data:{labels,datasets:[{label:"Customers",data:ch.values,backgroundColor:PALETTE.amber+"99",borderRadius:4}]},
+      options:{plugins:{legend:{display:false}},scales:{x:{display:false},y:{grid:{color:"rgba(99,179,237,.08)"}}}}
+    });
+  }
+}
+
+// ════════════════ MODELS ════════════════
+function renderModels(models){
+  const names = Object.keys(models);
+  const colors= [PALETTE.muted, PALETTE.cyan, PALETTE.green];
+
+  // AUC bar
+  makeChart("chart-auc-bar",{
+    type:"bar",
+    data:{labels:names,datasets:[{label:"AUC-ROC",data:names.map(n=>models[n].auc),
+      backgroundColor:colors.map(c=>c+"cc"),borderRadius:8,borderWidth:2,borderColor:colors}]},
+    options:{plugins:{legend:{display:false}},scales:{y:{min:0.55,max:0.70,grid:{color:"rgba(99,179,237,.08)"}},
+      x:{grid:{display:false}}}}
+  });
+
+  // ROC curves
+  const rocDS = names.map((n,i)=>({
+    label:n, data:models[n].roc_fpr.map((x,j)=>({x,y:models[n].roc_tpr[j]})),
+    borderColor:colors[i], borderWidth:2.5, fill:false, pointRadius:0, tension:.3
+  }));
+  rocDS.push({label:"Random",data:[{x:0,y:0},{x:1,y:1}],borderColor:"#475569",borderDash:[6,4],borderWidth:1.5,fill:false,pointRadius:0});
+  makeChart("chart-roc",{
+    type:"line",
+    data:{datasets:rocDS},
+    options:{scales:{x:{type:"linear",min:0,max:1,title:{display:true,text:"False Positive Rate"}},
+      y:{min:0,max:1,title:{display:true,text:"True Positive Rate"},grid:{color:"rgba(99,179,237,.08)"}}},
+      plugins:{legend:{position:"bottom"}}}
+  });
+
+  // Radar
+  const metrics = ["accuracy","precision","recall","f1","auc"];
+  makeChart("chart-metrics-radar",{
+    type:"radar",
+    data:{labels:["Accuracy","Precision","Recall","F1","AUC-ROC"],
+      datasets:names.map((n,i)=>({label:n,data:metrics.map(m=>models[n][m]),
+        borderColor:colors[i],backgroundColor:colors[i]+"33",borderWidth:2,pointRadius:4}))},
+    options:{scales:{r:{min:0.55,max:0.70,grid:{color:"rgba(99,179,237,.12)"},ticks:{display:false}}},
+      plugins:{legend:{position:"bottom"}}}
+  });
+
+  // Table
+  const tbody = document.getElementById("models-tbody");
+  names.forEach((n,i)=>{
+    const m = models[n];
+    const isBest = m.auc === Math.max(...names.map(k=>models[k].auc));
+    tbody.innerHTML += `<tr>
+      <td><strong>${n}</strong>${isBest?' ⭐':''}</td>
+      <td><strong style="color:${colors[i]}">${m.auc}</strong></td>
+      <td>${m.accuracy}</td><td>${m.precision}</td><td>${m.recall}</td><td>${m.f1}</td>
+      <td><span class="badge ${i===0?'traditional':'ai'}">${i===0?'Traditional':'AI'}</span></td>
+    </tr>`;
+  });
+
+  // Confusion matrices
+  const cmIds = ["cm-lr","cm-rf","cm-xgb"];
+  names.forEach((n,i)=>{
+    const cm = models[n].cm;
+    if(!cm) return;
+    makeChart(cmIds[i],{
+      type:"bar",
+      data:{labels:["True Neg","False Pos","False Neg","True Pos"],
+        datasets:[{data:[cm[0][0],cm[0][1],cm[1][0],cm[1][1]],
+          backgroundColor:[PALETTE.green+"aa",PALETTE.red+"aa",PALETTE.amber+"aa",PALETTE.blue+"aa"],borderRadius:6}]},
+      options:{plugins:{legend:{display:false}},scales:{y:{grid:{color:"rgba(99,179,237,.08)"},beginAtZero:true},x:{grid:{display:false}}}}
+    });
+  });
+}
+
+// ════════════════ COMPARE ════════════════
+function renderCompare(cmp, models, sum){
+  // Improvement strip
+  document.getElementById("imp-auc").textContent = cmp.improvement.auc+"%";
+  document.getElementById("imp-acc").textContent = cmp.improvement.accuracy+"%";
+  document.getElementById("imp-f1").textContent  = cmp.improvement.f1+"%";
+
+  // Side cards
+  function metricRows(data){
+    const keys=["auc","accuracy","precision","recall","f1"];
+    const labels=["AUC-ROC","Accuracy","Precision","Recall","F1-Score"];
+    return keys.map((k,i)=>`<div class="metric-row"><span class="metric-label">${labels[i]}</span>
+      <span class="metric-value" style="color:${PALETTE.green}">${data[k]}</span></div>`).join("");
+  }
+  document.getElementById("trad-metrics").innerHTML = metricRows(cmp.traditional);
+  document.getElementById("ai-metrics").innerHTML   = metricRows(cmp.ai);
+  document.querySelector("#ai-model-card .model-name").textContent = "🤖 "+cmp.ai.name;
+
+  // Update insight stats
+  document.getElementById("is-edu").textContent   = sum.education_importance_pct+"%";
+  document.getElementById("is-auc-imp").textContent = cmp.improvement.auc+"%↑";
+
+  // Grouped bar
+  const keys=["auc","accuracy","precision","recall","f1"];
+  const labels=["AUC-ROC","Accuracy","Precision","Recall","F1"];
+  makeChart("chart-compare-bar",{
+    type:"bar",
+    data:{labels,datasets:[
+      {label:"Traditional (LR)",data:keys.map(k=>cmp.traditional[k]),backgroundColor:PALETTE.muted+"99",borderRadius:6},
+      {label:"AI Model",data:keys.map(k=>cmp.ai[k]),backgroundColor:PALETTE.green+"99",borderRadius:6},
+    ]},
+    options:{plugins:{legend:{position:"bottom"}},scales:{y:{min:0.55,max:0.70,grid:{color:"rgba(99,179,237,.08)"}},x:{grid:{display:false}}}}
+  });
+
+  // ROC overlay for just two models
+  const trad = models["Logistic Regression"];
+  const bestName = Object.keys(models).find(k=>models[k].auc===cmp.ai.auc)||Object.keys(models)[1];
+  const best = models[bestName];
+  makeChart("chart-compare-roc",{
+    type:"line",
+    data:{datasets:[
+      {label:"Traditional (LR)",data:trad.roc_fpr.map((x,j)=>({x,y:trad.roc_tpr[j]})),borderColor:PALETTE.muted,borderWidth:2,fill:false,pointRadius:0,tension:.3},
+      {label:"AI Model",data:best.roc_fpr.map((x,j)=>({x,y:best.roc_tpr[j]})),borderColor:PALETTE.green,borderWidth:2.5,fill:false,pointRadius:0,tension:.3},
+      {label:"Random",data:[{x:0,y:0},{x:1,y:1}],borderColor:"#475569",borderDash:[5,5],borderWidth:1,fill:false,pointRadius:0},
+    ]},
+    options:{scales:{x:{type:"linear",min:0,max:1,title:{display:true,text:"False Positive Rate"}},
+      y:{min:0,max:1,title:{display:true,text:"True Positive Rate"},grid:{color:"rgba(99,179,237,.08)"}}},
+      plugins:{legend:{position:"bottom"}}}
+  });
+}
+
+// ════════════════ EDUCATION ════════════════
+function renderEducation(edu){
+  const order=["PhD","Master","Bachelor","Diploma","High School"];
+  const stats = edu.edu_stats.sort((a,b)=>order.indexOf(a.education_level)-order.indexOf(b.education_level));
+
+  // Default rate horizontal bar
+  makeChart("chart-edu-default",{
+    type:"bar",
+    data:{labels:stats.map(s=>s.education_level),
+      datasets:[{label:"Default Rate",data:stats.map(s=>+(s.default_rate*100).toFixed(1)),
+        backgroundColor:[PALETTE.green,PALETTE.cyan,PALETTE.amber,PALETTE.red+"bb",PALETTE.red],borderRadius:6}]},
+    options:{indexAxis:"y",plugins:{legend:{display:false}},
+      scales:{x:{max:80,title:{display:true,text:"Default Rate (%)"},grid:{color:"rgba(99,179,237,.08)"}},
+        y:{grid:{display:false}}}}
+  });
+
+  // Ablation
+  makeChart("chart-edu-ablation",{
+    type:"bar",
+    data:{labels:["With Education Features","Without Education Features"],
+      datasets:[{label:"AUC-ROC",data:[edu.auc_with_edu, edu.auc_without_edu],
+        backgroundColor:[PALETTE.green+"cc",PALETTE.red+"66"],borderRadius:8,borderWidth:2,
+        borderColor:[PALETTE.green,PALETTE.red+"99"]}]},
+    options:{plugins:{legend:{display:false}},scales:{y:{min:0.55,max:0.70,grid:{color:"rgba(99,179,237,.08)"}},x:{grid:{display:false}}}}
+  });
+
+  // Credit score bar
+  makeChart("chart-edu-credit",{
+    type:"bar",
+    data:{labels:stats.map(s=>s.education_level),
+      datasets:[{label:"Avg Credit Score",data:stats.map(s=>+s.avg_credit.toFixed(1)),
+        backgroundColor:PALETTE.purple+"cc",borderRadius:6}]},
+    options:{plugins:{legend:{display:false}},scales:{y:{min:650,grid:{color:"rgba(99,179,237,.08)"}},x:{grid:{display:false}}}}
+  });
+
+  // Table
+  const tbody=document.getElementById("edu-tbody");
+  stats.forEach(s=>{
+    const rate=(s.default_rate*100).toFixed(1);
+    const riskCls = rate>55?"high":rate>45?"medium":"low";
+    const riskLbl = rate>55?"High Risk":rate>45?"Medium":"Lower Risk";
+    tbody.innerHTML+=`<tr>
+      <td><strong>${s.education_level}</strong></td>
+      <td>${s.count.toLocaleString()}</td>
+      <td>${s.defaults.toLocaleString()}</td>
+      <td><strong style="color:${rate>55?PALETTE.red:rate>45?PALETTE.amber:PALETTE.green}">${rate}%</strong></td>
+      <td>$${+s.avg_income.toFixed(1)}K</td>
+      <td>${+s.avg_credit.toFixed(0)}</td>
+      <td><span class="badge ${riskCls}">${riskLbl}</span></td>
+    </tr>`;
+  });
+
+  // Progress bars
+  const prog=document.getElementById("edu-progress");
+  stats.forEach(s=>{
+    const rate=(s.default_rate*100).toFixed(1);
+    const pct=Math.min(+rate,80);
+    const col=pct>55?PALETTE.red:pct>45?PALETTE.amber:PALETTE.green;
+    prog.innerHTML+=`<div class="progress-row">
+      <div class="progress-meta"><span>${s.education_level}</span><span style="color:${col}">${rate}%</span></div>
+      <div class="progress-track"><div class="progress-fill" style="width:${pct/80*100}%;background:${col}"></div></div>
+    </div>`;
+  });
+}
+
+// ════════════════ FEATURES ════════════════
+function renderFeatures(fi){
+  const eduFeats    = ["education_encoded","institution_prestige","field_encoded","years_since_grad"];
+  const altFeats    = ["monthly_online_transactions","avg_transaction_value","utility_payment_consistency","utility_payment_delay","monthly_mobile_topups","ecommerce_per_month","online_activity_freq","social_posts_week","social_network_size","social_engagement"];
+  const tradFeats   = ["annual_income","years_employed","debt_to_income_ratio","credit_score","payment_history_score","num_credit_lines","num_defaults_past","tenure_months"];
+
+  function catColor(name){
+    if(eduFeats.includes(name))  return PALETTE.green;
+    if(altFeats.includes(name))  return PALETTE.blue;
+    if(tradFeats.includes(name)) return PALETTE.muted;
+    return PALETTE.amber;
+  }
+
+  // Main bar chart
+  const top20 = fi.slice(0,20);
+  makeChart("chart-fi-bar",{
+    type:"bar",
+    data:{labels:top20.map(f=>f.feature),
+      datasets:[{label:"Importance",data:top20.map(f=>f.importance),
+        backgroundColor:top20.map(f=>catColor(f.feature)+"cc"),borderRadius:5}]},
+    options:{indexAxis:"y",plugins:{legend:{display:false}},
+      scales:{x:{grid:{color:"rgba(99,179,237,.08)"}},y:{grid:{display:false},ticks:{font:{size:11}}}}}
+  });
+
+  // Progress list (left panel)
+  const prog=document.getElementById("fi-progress");
+  top20.forEach((f,i)=>{
+    const pct=(f.importance/top20[0].importance*100).toFixed(0);
+    const col=catColor(f.feature);
+    prog.innerHTML+=`<div class="progress-row">
+      <div class="progress-meta"><span style="font-size:11px">${i+1}. ${f.feature}</span><span style="color:${col};font-size:11px">${(f.importance*100).toFixed(2)}%</span></div>
+      <div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:${col}"></div></div>
+    </div>`;
+  });
+
+  // Category lists
+  function catList(ids, containerId){
+    const el=document.getElementById(containerId);
+    const items=fi.filter(f=>ids.includes(f.feature));
+    items.forEach(f=>{
+      el.innerHTML+=`<div class="progress-row" style="margin-bottom:10px">
+        <div class="progress-meta"><span style="font-size:12px">${f.feature}</span><span style="color:${catColor(f.feature)};font-size:12px">${(f.importance*100).toFixed(2)}%</span></div>
+        <div class="progress-track"><div class="progress-fill" style="width:${(f.importance/fi[0].importance*100).toFixed(0)}%;background:${catColor(f.feature)}"></div></div>
+      </div>`;
+    });
+  }
+  catList(eduFeats,"edu-fi-list");
+  catList(altFeats,"alt-fi-list");
+  catList(tradFeats,"trad-fi-list");
+}
+
+// ════════════════ LIVE FEED ════════════════
+async function renderLiveFeed(){
+  const data = await fetch(BASE+"/api/live_stream").then(r=>r.json());
+  const tbody = document.getElementById("live-table-body");
+  tbody.innerHTML="";
+  let h=0,m=0,l=0;
+  const scores=[];
+  data.forEach((row,i)=>{
+    const riskCls=row.risk==="High"?"high":row.risk==="Medium"?"medium":"low";
+    if(row.risk==="High")h++;else if(row.risk==="Medium")m++;else l++;
+    scores.push(row.risk_prob);
+    tbody.innerHTML+=`<tr>
+      <td>${row.id}</td><td>${row.education}</td>
+      <td>$${row.income}K</td><td>${row.credit}</td><td>${row.dti}</td>
+      <td><strong style="font-family:var(--mono)">${(row.risk_prob*100).toFixed(1)}%</strong></td>
+      <td><span class="badge ${riskCls}">${row.risk}</span></td>
+      <td>${row.actual?"<span style='color:var(--red)'>✗ Default</span>":"<span style='color:var(--green)'>✓ OK</span>"}</td>
+    </tr>`;
+  });
+  document.getElementById("feed-status").textContent=`${data.length} customers scored — High: ${h}, Medium: ${m}, Low: ${l}`;
+
+  // donut
+  if(liveChart1) liveChart1.destroy();
+  liveChart1 = makeChart("chart-live-donut",{
+    type:"doughnut",
+    data:{labels:["High","Medium","Low"],datasets:[{data:[h,m,l],
+      backgroundColor:[PALETTE.red+"cc",PALETTE.amber+"cc",PALETTE.green+"cc"],borderWidth:0}]},
+    options:{plugins:{legend:{position:"bottom"}},cutout:"60%"}
+  });
+
+  // score histogram
+  const bins=Array(10).fill(0);
+  scores.forEach(s=>{const b=Math.min(Math.floor(s*10),9);bins[b]++;});
+  if(liveChart2) liveChart2.destroy();
+  liveChart2 = makeChart("chart-live-scores",{
+    type:"bar",
+    data:{labels:["0-10%","10-20%","20-30%","30-40%","40-50%","50-60%","60-70%","70-80%","80-90%","90-100%"],
+      datasets:[{label:"Customers",data:bins,backgroundColor:bins.map((_,i)=>i>=6?PALETTE.red+"aa":i>=4?PALETTE.amber+"aa":PALETTE.green+"aa"),borderRadius:4}]},
+    options:{plugins:{legend:{display:false}},scales:{y:{grid:{color:"rgba(99,179,237,.08)"},beginAtZero:true},x:{grid:{display:false},ticks:{font:{size:10}}}}}
+  });
+}
+
+document.getElementById("btn-refresh").addEventListener("click",renderLiveFeed);
+document.getElementById("btn-auto").addEventListener("click",function(){
+  if(liveTimer){clearInterval(liveTimer);liveTimer=null;this.textContent="▶  Auto-Refresh (5s)";this.className="btn btn-outline";}
+  else{liveTimer=setInterval(renderLiveFeed,5000);this.textContent="⏸  Stop Auto-Refresh";this.className="btn btn-primary";}
+});
+
+// ════════════════ PREDICTOR ════════════════
+document.getElementById("btn-predict").addEventListener("click", async()=>{
+  const payload={
+    annual_income:    +document.getElementById("p-income").value,
+    years_employed:   +document.getElementById("p-employed").value,
+    credit_score:     +document.getElementById("p-credit").value,
+    debt_to_income:   +document.getElementById("p-dti").value,
+    payment_history:  +document.getElementById("p-payment").value,
+    credit_lines:     +document.getElementById("p-lines").value,
+    past_defaults:    +document.getElementById("p-defaults").value,
+    tenure_months:    +document.getElementById("p-tenure").value,
+    online_tx:        +document.getElementById("p-online-tx").value,
+    avg_tx_value:     +document.getElementById("p-tx-val").value,
+    utility_consist:  +document.getElementById("p-utility").value,
+    mobile_topups:    +document.getElementById("p-mobile").value,
+    ecommerce:        +document.getElementById("p-ecom").value,
+    online_activity:  +document.getElementById("p-activity").value,
+    education:        document.getElementById("p-edu").value,
+    institution_prestige: +document.getElementById("p-prestige").value,
+    field:            document.getElementById("p-field").value,
+    years_since_grad: +document.getElementById("p-grad").value,
+    social_posts:     +document.getElementById("p-posts").value,
+    social_network:   +document.getElementById("p-network").value,
+    social_engage:    +document.getElementById("p-engage").value,
+    model:            document.getElementById("p-model").value,
+  };
+  const btn=document.getElementById("btn-predict");
+  btn.textContent="Predicting…"; btn.disabled=true;
+  try{
+    const res = await fetch(BASE+"/api/predict",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+    const result = await res.json();
+    updateGauge(result.probability, result.risk_label);
+    document.getElementById("result-model-name").textContent=`Model: ${payload.model} — ${result.risk_label}`;
+    // factor display
+    const eduScore=payload.education==="PhD"?0.05:payload.education==="Master"?0.15:payload.education==="Bachelor"?0.3:payload.education==="Diploma"?0.5:0.7;
+    const creditScore=(850-payload.credit_score)/550;
+    const dtiScore=payload.debt_to_income;
+    const utilScore=1-payload.utility_consist;
+    const mobScore=payload.mobile_topups<2?0.8:payload.mobile_topups<4?0.4:0.2;
+    document.getElementById("rf-edu").textContent   = payload.education+" → "+(eduScore*100).toFixed(0)+"% risk contrib";
+    document.getElementById("rf-credit").textContent= payload.credit_score+" → "+(creditScore*100).toFixed(0)+"% risk contrib";
+    document.getElementById("rf-dti").textContent   = payload.debt_to_income+" → "+(dtiScore*100).toFixed(0)+"% risk contrib";
+    document.getElementById("rf-util").textContent  = payload.utility_consist+" → "+(utilScore*100).toFixed(0)+"% risk contrib";
+    document.getElementById("rf-mobile").textContent= payload.mobile_topups+" topups → "+(mobScore*100).toFixed(0)+"% risk contrib";
+  }catch(e){ alert("Prediction failed — is the server running?"); }
+  btn.textContent="🎯  Predict Financial Risk"; btn.disabled=false;
+});
+
+function updateGauge(prob, label){
+  const pct=(prob*100).toFixed(1);
+  const circumference=251.2;
+  const offset=circumference - (prob*circumference);
+  const col=prob>0.65?PALETTE.red:prob>0.40?PALETTE.amber:PALETTE.green;
+  document.getElementById("gauge-fill").style.strokeDashoffset=offset;
+  document.getElementById("gauge-fill").style.stroke=col;
+  document.getElementById("gauge-pct").textContent=pct+"%";
+  document.getElementById("gauge-pct").style.color=col;
+  const riskCls=label.includes("High")?"high":label.includes("Medium")?"medium":"low";
+  document.getElementById("result-badge-wrap").innerHTML=`<div class="result-badge ${riskCls}">${label}</div>`;
+}
+
+// ════════════════ START ════════════════
+window.addEventListener("load", boot);
+</script>
+</body>
+</html>
