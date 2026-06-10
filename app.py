@@ -214,6 +214,13 @@ def boot():
     print(f"✓  Ready in {time.time()-t0:.1f}s")
 
 # ──────────────────────────────────────────
+#  RUN boot() AT MODULE IMPORT TIME
+#  (required for Gunicorn — it imports the
+#   module directly, never runs __main__)
+# ──────────────────────────────────────────
+boot()
+
+# ──────────────────────────────────────────
 #  API ROUTES
 # ──────────────────────────────────────────
 
@@ -252,12 +259,7 @@ def api_education():
 
 @app.route("/api/distribution")
 def api_distribution():
-    df = CACHE.get("df")
-
-    if df is None:
-        return jsonify({
-            "error": "No data loaded. Please upload a file first."
-        }), 400
+    df = CACHE["df"]
     income_bins  = np.histogram(df["annual_income"], bins=20)
     credit_bins  = np.histogram(df["credit_score"],  bins=20)
     return jsonify({
@@ -352,6 +354,5 @@ def api_live_stream():
     return jsonify(result)
 
 if __name__ == "__main__":
-    boot()
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
