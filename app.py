@@ -252,7 +252,12 @@ def api_education():
 
 @app.route("/api/distribution")
 def api_distribution():
-    df = CACHE["df"]
+    df = CACHE.get("df")
+
+    if df is None:
+        return jsonify({
+            "error": "No data loaded. Please upload a file first."
+        }), 400
     income_bins  = np.histogram(df["annual_income"], bins=20)
     credit_bins  = np.histogram(df["credit_score"],  bins=20)
     return jsonify({
